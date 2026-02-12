@@ -1233,3 +1233,129 @@ a:active,
     font-size: 1.5rem;
   }
 }
+
+/* ============================================
+   Script Access Panel (Sidebar)
+   ============================================ */
+.script-access-panel {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  transition: border-color var(--transition-fast);
+}
+
+.script-access-panel:hover {
+  border-color: var(--accent-color);
+}
+
+.script-access-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.script-access-icon {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
+  flex-shrink: 0;
+  box-shadow: none;
+}
+
+.script-access-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.script-access-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.script-access-sub {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.script-access-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.script-access-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-family: var(--font-sans);
+  transition: all var(--transition-fast);
+}
+
+.script-access-input:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.script-access-input::placeholder {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.script-access-error {
+  color: #ef4444;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-align: center;
+  min-height: 0;
+}
+
+.script-access-error:empty {
+  display: none;
+}
+
+.script-access-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, var(--accent-color), var(--accent-hover));
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+.script-access-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35);
+}
+
+.script-access-btn:active {
+  transform: translateY(0);
+}

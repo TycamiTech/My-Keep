@@ -10,7 +10,6 @@
 // Login Credentials (Change these as needed)
 const AUTHORIZED_USERS = [
   { username: 'tycami', password: 'tycamitech' },
-  { username: 'admin', password: 'admin123' } // Added new user
 ];
 
 const AUTH_STORAGE_KEY = 'notes_auth_status';
@@ -194,6 +193,7 @@ function checkLogin() {
     renderCategories();
     renderNotes();
     setupEventListeners();
+    setupScriptAccessPanel();
 
     return true;
   } else {
@@ -240,6 +240,61 @@ function logout() {
 // END OF LOGIN GATE SYSTEM
 // ============================================
 
+// ============================================
+// SCRIPT ACCESS PANEL (Sidebar mini-login)
+// ============================================
+const SCRIPT_ADMIN_USERS = [
+  { username: 'tycami', password: 'tycamitech' }
+];
+
+const SCRIPT_AUTH_KEY = 'script_admin_auth';
+const SCRIPT_AUTH_TS_KEY = 'script_admin_timestamp';
+
+function setupScriptAccessPanel() {
+  const form = document.getElementById('scriptAccessForm');
+  const btn = document.getElementById('scriptAccessBtn');
+  const userInput = document.getElementById('scriptUser');
+  const passInput = document.getElementById('scriptPass');
+  const errorDiv = document.getElementById('scriptAccessError');
+
+  if (!form) return;
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    const u = userInput.value.trim();
+    const p = passInput.value;
+
+    if (!u || !p) {
+      errorDiv.textContent = 'Enter username & password';
+      return;
+    }
+
+    const found = SCRIPT_ADMIN_USERS.find(a => a.username === u && a.password === p);
+    if (found) {
+      // Store admin auth so script.html auto-unlocks
+      localStorage.setItem(SCRIPT_AUTH_KEY, 'true');
+      localStorage.setItem(SCRIPT_AUTH_TS_KEY, Date.now().toString());
+      // Redirect to script page
+      window.location.href = 'script.html';
+    } else {
+      errorDiv.textContent = 'Invalid admin credentials';
+      passInput.value = '';
+      passInput.focus();
+    }
+  };
+
+  form.addEventListener('submit', handleLogin);
+  btn.addEventListener('click', handleLogin);
+
+  // Clear error on input
+  [userInput, passInput].forEach(el => {
+    el.addEventListener('input', () => { errorDiv.textContent = ''; });
+  });
+}
+// ============================================
+// END OF SCRIPT ACCESS PANEL
+// ============================================
+
 // State Management
 let currentCategory = 'all';
 let searchQuery = '';
@@ -274,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCategories();
     renderNotes();
     setupEventListeners();
+    setupScriptAccessPanel();
   }
 });
 
