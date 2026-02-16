@@ -17,185 +17,89 @@ const ADMIN_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 const MIKROTIK_SCRIPTS = [
     {
         id: 1,
-        name: 'Basic Configuration',
-        filename: 'basic-config.rsc',
+        name: 'Firewall Script',
+        filename: 'firewall.rsc',
         type: 'rsc',
-        description: 'Konfigurasi dasar MikroTik meliputi identity, login, interface, IP address, dan DNS.',
-        tags: ['Setup', 'Basic'],
-        size: '2.4 KB',
-        date: '2026-02-10',
-        content: `# MikroTik Basic Configuration
-# ================================
-/system identity set name="MikroTik-Router"
-
-# Interface Configuration
-/interface set ether1 name=ether1-Internet
-/interface set ether2 name=ether2-Guru
-/interface set ether3 name=ether3-Murid
-/interface set ether4 name=ether4-Server
-
-# IP Address
-/ip address
-add address=192.168.1.2/24 interface=ether1-Internet
-add address=10.10.10.1/24 interface=ether2-Guru
-add address=10.10.20.1/24 interface=ether3-Murid
-add address=10.10.30.1/24 interface=ether4-Server
-
-# DNS
-/ip dns set servers=8.8.8.8,8.8.4.4 allow-remote-requests=yes`
+        description: 'Custom firewall script configurations.',
+        tags: ['Firewall', 'Custom'],
+        size: '1.7 KB',
+        date: '2026-02-15',
+        content: `# feb/15/2026 22:55:51 by RouterOS 6.49.17
+# software id = S8R8-ZTKU
+#
+# model = RouterBOARD 941-2nD
+# serial number = 66160518E906
+/ip firewall filter
+add action=drop chain=forward comment="Siswa Ke Guru" dst-address=\\
+    192.168.10.0/24 log=yes log-prefix="Siswa sedang ingin mengakses Guru" \\
+    src-address=192.168.20.0/24
+add action=drop chain=input comment="Batasi akses DNS Port Siswa" dst-port=53 \\
+    in-interface=ether3-Siswa protocol=tcp
+add action=drop chain=input dst-port=53 in-interface=ether3-Siswa protocol=\\
+    udp
+add action=accept chain=forward comment="Server ke Guru" dst-address=\\
+    192.168.10.0/24 log=yes log-prefix="Server sedang mengakses Guru" \\
+    src-address=192.168.30.0/24
+add action=drop chain=input comment="Aturan Blokir Brute Force" \\
+    connection-state=new dst-port=8299,222,233,800 log=yes log-prefix=\\
+    Terblokir protocol=tcp src-address-list="Peringatan 3"
+add action=add-src-to-address-list address-list="Peringatan 3" \\
+    address-list-timeout=30m chain=input connection-state=new dst-port=\\
+    8299,222,233,800 log=yes log-prefix=Terblokir protocol=tcp \\
+    src-address-list="Peringatan 2"
+add action=add-src-to-address-list address-list="Peringatan 2" \\
+    address-list-timeout=1m chain=input connection-state=new dst-port=\\
+    8299,222,233,800 protocol=tcp src-address-list="Peringatan 1"
+add action=add-src-to-address-list address-list="Peringatan 1" \\
+    address-list-timeout=20s chain=input connection-state=new dst-port=\\
+    8299,222,233,800 protocol=tcp
+add action=log chain=forward comment=\\
+    "Mencatat aktivitas yang sedang mengakses Server" dst-address=\\
+    192.168.30.0/24 log-prefix="Trafik Destination Server"`
     },
     {
         id: 2,
-        name: 'DHCP Server Setup',
-        filename: 'dhcp-setup.rsc',
+        name: 'TikTok Mangle Add List',
+        filename: 'tiktokaddlist.rsc',
         type: 'rsc',
-        description: 'Setup DHCP Server untuk semua jaringan lokal (Guru, Murid, Server).',
-        tags: ['DHCP', 'Network'],
+        description: 'Layer7 protocols and Mangle rules for TikTok and Speedtest traffic separation.',
+        tags: ['TikTok', 'Speedtest', 'Mangle', 'Layer7'],
         size: '1.8 KB',
-        date: '2026-02-10',
-        content: `# DHCP Server Configuration
-# ================================
-
-# DHCP Pool - Guru
-/ip pool add name=pool-guru ranges=10.10.10.2-10.10.10.254
-
-# DHCP Pool - Murid
-/ip pool add name=pool-murid ranges=10.10.20.2-10.10.20.254
-
-# DHCP Pool - Server
-/ip pool add name=pool-server ranges=10.10.30.2-10.10.30.254
-
-# DHCP Server
-/ip dhcp-server
-add name=dhcp-guru interface=ether2-Guru address-pool=pool-guru disabled=no
-add name=dhcp-murid interface=ether3-Murid address-pool=pool-murid disabled=no
-add name=dhcp-server interface=ether4-Server address-pool=pool-server disabled=no
-
-# DHCP Network
-/ip dhcp-server network
-add address=10.10.10.0/24 gateway=10.10.10.1 dns-server=8.8.8.8,8.8.4.4
-add address=10.10.20.0/24 gateway=10.10.20.1 dns-server=8.8.8.8,8.8.4.4
-add address=10.10.30.0/24 gateway=10.10.30.1 dns-server=8.8.8.8,8.8.4.4`
-    },
-    {
-        id: 3,
-        name: 'Firewall Rules',
-        filename: 'firewall-rules.rsc',
-        type: 'rsc',
-        description: 'Konfigurasi firewall: blok murid ke guru, proteksi DNS, brute force protection, dan logging.',
-        tags: ['Firewall', 'Security'],
-        size: '3.1 KB',
-        date: '2026-02-10',
-        content: `# Firewall Configuration
-# ================================
-
-# NAT Masquerade
-/ip firewall nat add chain=srcnat out-interface=ether1-Internet action=masquerade
-
-# Block Murid to Guru
-/ip firewall filter
-add chain=forward src-address=10.10.20.0/24 dst-address=10.10.10.0/24 action=drop comment="Block Murid to Guru"
-
-# Accept Server to Guru
-add chain=forward src-address=10.10.30.0/24 dst-address=10.10.10.0/24 action=accept comment="Allow Server to Guru"
-
-# DNS Security
-add chain=input protocol=udp dst-port=53 in-interface=ether1-Internet action=drop comment="Secure DNS"
-add chain=input protocol=tcp dst-port=53 in-interface=ether1-Internet action=drop comment="Secure DNS TCP"
-
-# Brute Force Protection
-add chain=input protocol=tcp dst-port=8291 src-address-list=blacklist action=drop comment="Drop Brute Force"
-add chain=input protocol=tcp dst-port=8291 connection-state=new src-address-list=stage3 action=add-src-to-address-list address-list=blacklist address-list-timeout=1d
-add chain=input protocol=tcp dst-port=8291 connection-state=new src-address-list=stage2 action=add-src-to-address-list address-list=stage3 address-list-timeout=1m
-add chain=input protocol=tcp dst-port=8291 connection-state=new src-address-list=stage1 action=add-src-to-address-list address-list=stage2 address-list-timeout=1m
-add chain=input protocol=tcp dst-port=8291 connection-state=new action=add-src-to-address-list address-list=stage1 address-list-timeout=1m
-
-# Logging
-add chain=forward action=log log-prefix="FW-FORWARD" comment="Log Forward"`
-    },
-    {
-        id: 4,
-        name: 'IP Services & Security',
-        filename: 'ip-services.rsc',
-        type: 'rsc',
-        description: 'Konfigurasi port service: Winbox, SSH, Telnet, HTTP dan user management.',
-        tags: ['Services', 'Security'],
-        size: '1.2 KB',
-        date: '2026-02-10',
-        content: `# IP Services Configuration
-# ================================
-
-# Change default ports
-/ip service
-set winbox port=8291
-set ssh port=2222
-set telnet port=2323
-set www port=8080
-set api disabled=yes
-set api-ssl disabled=yes
-set ftp disabled=yes
-
-# User Management
-/user
-add name=server group=full password=server123
-add name=guru group=read password=guru123
-
-# Interface & Neighbor List
-/interface list
-add name=LAN
-add name=WAN
-/interface list member
-add interface=ether2-Guru list=LAN
-add interface=ether3-Murid list=LAN
-add interface=ether4-Server list=LAN
-add interface=ether1-Internet list=WAN
-
-# MAC Server - Tools
-/tool mac-server set allowed-interface-list=LAN
-/tool mac-server mac-winbox set allowed-interface-list=LAN
-/tool mac-server ping set enabled=yes`
-    },
-    {
-        id: 5,
-        name: 'Full Backup Script',
-        filename: 'full-backup.txt',
-        type: 'txt',
-        description: 'Script lengkap semua konfigurasi MikroTik dalam satu file untuk backup/restore.',
-        tags: ['Backup', 'Complete'],
-        size: '8.5 KB',
-        date: '2026-02-10',
-        content: `# ================================
-# FULL MIKROTIK BACKUP CONFIGURATION
-# Generated: 2026-02-10
-# ================================
-
-# System Identity
-/system identity set name="MikroTik-Router"
-
-# Interface Renaming
-/interface set ether1 name=ether1-Internet
-/interface set ether2 name=ether2-Guru
-/interface set ether3 name=ether3-Murid
-/interface set ether4 name=ether4-Server
-
-# IP Address Configuration
-/ip address
-add address=192.168.1.2/24 interface=ether1-Internet
-add address=10.10.10.1/24 interface=ether2-Guru
-add address=10.10.20.1/24 interface=ether3-Murid
-add address=10.10.30.1/24 interface=ether4-Server
-
-# Default Route
-/ip route add dst-address=0.0.0.0/0 gateway=192.168.1.1
-
-# DNS
-/ip dns set servers=8.8.8.8,8.8.4.4 allow-remote-requests=yes
-
-# DHCP Configuration (see dhcp-setup.rsc for details)
-# Firewall Configuration (see firewall-rules.rsc for details)
-# IP Services (see ip-services.rsc for details)
-
-# End of Backup`
+        date: '2026-02-16',
+        content: `# jan/16/2005 19:34:38 by RouterOS 7.9
+# software id = 03FK-Q7XE
+#
+/ip firewall layer7-protocol
+add name=SpeedTest regexp="^.+(speedtest-+[a-z0-9.]+[a-z]+.net.id|nflxvideo.ne\\
+    t|ooklaserver.net|speedtestcustom.com|speedtest.net|fast.com|speedtest.+[a\\
+    -z]+.id|openspeedtest.com|speedcheck.org|.speedtest.|.measurementlab.net|.\\
+    measurement-lab.org|wifiman.com|.uwn.com|nperf.com|.nperf.|whatismyip.com|\\
+    whatismyipaddress.com|.whatismyipaddress.com).*\$"
+add name=TikTok regexp="^.*([\\.\\/-])(tiktok|tiktokcdn|tiktokv|ttwstatic|byte\\
+    oversea|musical\\.ly|snssdk|ibytedtos|ibyteimg|p16-tiktokcdn|tiktok-pixel)\\
+    ([\\.\\/-]).*\$"
+/ip firewall address-list
+add address=10.1.1.0/24 list="IP LOKAL"
+add address=172.20.84.0/28 list="IP LOKAL"
+add address=192.168.1.0/24 list="IP LOKAL"
+add address=10.5.10.0/28 list="IP LOKAL"
+/ip firewall mangle
+add action=add-dst-to-address-list address-list=SpeedTest \\
+    address-list-timeout=none-dynamic chain=prerouting comment=SpeedTest \\
+    dst-address-list="!IP LOKAL" layer7-protocol=SpeedTest src-address-list=\\
+    "IP LOKAL"
+add action=mark-routing chain=prerouting dst-address-list=SpeedTest \\
+    new-routing-mark=SpeedTest passthrough=no src-address-list="IP LOKAL"
+add action=add-dst-to-address-list address-list=TikTok address-list-timeout=\\
+    none-dynamic chain=prerouting comment=TikTok dst-address-list="!IP LOKAL" \\
+    layer7-protocol=TikTok src-address-list="IP LOKAL"
+add action=mark-routing chain=prerouting dst-address-list=TikTok \\
+    new-routing-mark=TikTok passthrough=no src-address-list="IP LOKAL"
+/ip firewall nat
+add action=masquerade chain=srcnat out-interface=ether1-gopal
+add action=masquerade chain=srcnat out-interface=ether2-indi
+add action=masquerade chain=srcnat out-interface=WG-MAHAVIKRI
+`
     }
 ];
 

@@ -340,13 +340,19 @@ const elements = {
 
 // Initialize the application
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize theme immediately (for login screen)
+  initializeTheme();
+
   // Check authentication first
   checkAuthStatus();
 
   // If already authenticated, initialize the app
   if (localStorage.getItem(AUTH_STORAGE_KEY) === 'true') {
     initializeElements();
-    initializeTheme();
+    // Theme is already initialized, but we need to update the icon now that elements exist
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    updateThemeIcon(currentTheme);
+    
     renderCategories();
     renderNotes();
     setupEventListeners();
@@ -380,7 +386,8 @@ function initializeElements() {
 function initializeTheme() {
   const savedTheme = localStorage.getItem('theme');
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+  // Default to dark mode if no preference is saved
+  const theme = savedTheme || 'dark';
   setTheme(theme);
 }
 
@@ -397,6 +404,7 @@ function toggleTheme() {
 }
 
 function updateThemeIcon(theme) {
+  if (!elements.themeToggle) return;
   const iconContainer = elements.themeToggle.querySelector('.theme-icon');
   const textSpan = elements.themeToggle.querySelector('span:last-child');
 
